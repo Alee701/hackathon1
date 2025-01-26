@@ -5,43 +5,62 @@ import {
   Button,
   Typography,
   Paper,
-  Alert,
   Tabs,
   Tab,
+  InputAdornment,
+  IconButton,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import { loginUser, registerUser } from '../services/api'; // Backend API calls
-import AppContext from '../context/AppContext';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { loginUser, registerUser } from '../services/api';
+import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
 const AuthPage = () => {
-  const { dispatch } = useContext(AppContext);
+  const context = useContext(AppContext);
+
+  if (!context) {
+    throw new Error('AppContext is not defined. Please ensure the AppProvider is properly set up.');
+  }
+
+  const { dispatch } = context;
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState(0); // 0 for Login, 1 for Register
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '', // Only used for registration
-  });
-  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [error, setError] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: '' });
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    setFormData({ email: '', password: '', name: '' }); // Reset form data
-    setError(null); // Reset error
+    setFormData({ email: '', password: '', name: '' }); // Reset form
+    setError('');
   };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleGoogleAuth = () => {
-    alert('Google Authentication Coming Soon!');
-    // Implement Google Authentication using OAuth
+  const handlePasswordVisibilityToggle = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation for missing fields
+    if (!formData.email || !formData.password || (activeTab === 1 && !formData.name)) {
+      setError('All fields are required.');
+      setSnackbar({ open: true, message: 'Please fill in all fields.', severity: 'error' });
+      return;
+    }
+
     try {
       if (activeTab === 0) {
         // Login
@@ -55,7 +74,9 @@ const AuthPage = () => {
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Invalid credentials. Please try again.';
+      setError(errorMessage);
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
   };
 
@@ -66,12 +87,12 @@ const AuthPage = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#e8f5e9',
         padding: 2,
       }}
     >
-      <Paper elevation={3} sx={{ padding: 4, width: '100%', maxWidth: 400 }}>
-        <Typography variant="h4" gutterBottom sx={{ textAlign: 'center' }}>
+      <Paper elevation={5} sx={{ padding: 4, width: '100%', maxWidth: 400, borderRadius: 4 }}>
+        <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
           {activeTab === 0 ? 'Login' : 'Register'}
         </Typography>
 
@@ -88,7 +109,7 @@ const AuthPage = () => {
           <Tab label="Register" />
         </Tabs>
 
-        {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         {/* Login/Register Form */}
         <form onSubmit={handleSubmit}>
@@ -101,7 +122,7 @@ const AuthPage = () => {
               variant="outlined"
               value={formData.name}
               onChange={handleChange}
-              required={activeTab === 1}
+              required
             />
           )}
           <TextField
@@ -118,35 +139,45 @@ const AuthPage = () => {
             fullWidth
             label="Password"
             name="password"
-            type="password"
+            type={passwordVisible ? 'text' : 'password'}
             margin="normal"
             variant="outlined"
             value={formData.password}
             onChange={handleChange}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={handlePasswordVisibilityToggle}>
+                    {passwordVisible ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <Button
             type="submit"
             variant="contained"
             color="primary"
             fullWidth
-            sx={{ marginTop: 2 }}
+            sx={{ marginTop: 2, py: 1 }}
           >
             {activeTab === 0 ? 'Login' : 'Register'}
           </Button>
         </form>
-
-        {/* Google Authentication Button */}
-        <Button
-          variant="outlined"
-          color="secondary"
-          fullWidth
-          sx={{ marginTop: 2 }}
-          onClick={handleGoogleAuth}
-        >
-          Continue with Google
-        </Button>
       </Paper>
+
+      {/* Snackbar for Alerts */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
