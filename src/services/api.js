@@ -6,6 +6,31 @@ const API = axios.create({
   timeout: 10000, // Set timeout to prevent hanging requests
 });
 
+export const getLoanSlips = async () => {
+  return {
+    data: [
+      {
+        id: '12345',
+        type: 'Education Loan',
+        date: '2025-01-01',
+        amount: 50000,
+      },
+      {
+        id: '67890',
+        type: 'Wedding Loan',
+        date: '2025-01-15',
+        amount: 200000,
+      },
+    ],
+  };
+};
+
+export const SlipDownload = async (loanId) => {
+  return axios.get(`/loan-slips/download/${loanId}`, {
+    responseType: 'blob',
+  });
+};
+
 // Automatically attach authorization token to requests if available
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
