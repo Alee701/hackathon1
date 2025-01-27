@@ -11,9 +11,10 @@ import {
   IconButton,
   Snackbar,
   Alert,
+  Divider,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { loginUser, registerUser } from '../services/api';
+import { loginUser, registerUser } from '../services/api'; // Backend API calls
 import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -63,18 +64,20 @@ const AuthPage = () => {
 
     try {
       if (activeTab === 0) {
-        // Login
+        // Login API Call
         const response = await loginUser({ email: formData.email, password: formData.password });
         dispatch({ type: 'SET_USER', payload: response.data.user });
-        navigate('/dashboard');
+        setSnackbar({ open: true, message: 'Login successful!', severity: 'success' });
+        navigate('/dashboard'); // Redirect to user dashboard
       } else {
-        // Register
+        // Register API Call
         const response = await registerUser(formData);
         dispatch({ type: 'SET_USER', payload: response.data.user });
-        navigate('/dashboard');
+        setSnackbar({ open: true, message: 'Registration successful!', severity: 'success' });
+        navigate('/dashboard'); // Redirect to user dashboard
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Invalid credentials. Please try again.';
+      const errorMessage = err.response?.data?.message || 'An error occurred. Please try again.';
       setError(errorMessage);
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
@@ -87,13 +90,36 @@ const AuthPage = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#e8f5e9',
+        backgroundColor: '#f0f4f7',
         padding: 2,
       }}
     >
-      <Paper elevation={5} sx={{ padding: 4, width: '100%', maxWidth: 400, borderRadius: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
-          {activeTab === 0 ? 'Login' : 'Register'}
+      <Paper
+        elevation={8}
+        sx={{
+          padding: 4,
+          width: '100%',
+          maxWidth: 450,
+          borderRadius: 4,
+          boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.2)',
+          backgroundColor: '#fff',
+        }}
+      >
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{
+            textAlign: 'center',
+            fontWeight: 'bold',
+            color: '#1976d2',
+          }}
+        >
+          {activeTab === 0 ? 'Welcome Back!' : 'Join Us Today!'}
+        </Typography>
+        <Typography variant="subtitle1" sx={{ textAlign: 'center', mb: 3, color: '#555' }}>
+          {activeTab === 0
+            ? 'Log in to access your dashboard and manage your loans.'
+            : 'Sign up to start your financial journey with us.'}
         </Typography>
 
         {/* Tabs for Login and Register */}
@@ -103,13 +129,20 @@ const AuthPage = () => {
           indicatorColor="primary"
           textColor="primary"
           centered
-          sx={{ marginBottom: 3 }}
+          sx={{
+            marginBottom: 3,
+            '& .MuiTabs-indicator': { backgroundColor: '#1976d2' },
+          }}
         >
-          <Tab label="Login" />
-          <Tab label="Register" />
+          <Tab label="Login" sx={{ fontWeight: 'bold' }} />
+          <Tab label="Register" sx={{ fontWeight: 'bold' }} />
         </Tabs>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         {/* Login/Register Form */}
         <form onSubmit={handleSubmit}>
@@ -123,6 +156,7 @@ const AuthPage = () => {
               value={formData.name}
               onChange={handleChange}
               required
+              sx={{ backgroundColor: '#f9f9f9' }}
             />
           )}
           <TextField
@@ -134,6 +168,7 @@ const AuthPage = () => {
             value={formData.email}
             onChange={handleChange}
             required
+            sx={{ backgroundColor: '#f9f9f9' }}
           />
           <TextField
             fullWidth
@@ -145,6 +180,7 @@ const AuthPage = () => {
             value={formData.password}
             onChange={handleChange}
             required
+            sx={{ backgroundColor: '#f9f9f9' }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -158,13 +194,32 @@ const AuthPage = () => {
           <Button
             type="submit"
             variant="contained"
-            color="primary"
             fullWidth
-            sx={{ marginTop: 2, py: 1 }}
+            sx={{
+              marginTop: 2,
+              py: 1.5,
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#115293' },
+              fontWeight: 'bold',
+            }}
           >
             {activeTab === 0 ? 'Login' : 'Register'}
           </Button>
         </form>
+        <Divider sx={{ my: 3 }}>OR</Divider>
+        <Button
+          variant="outlined"
+          fullWidth
+          sx={{
+            py: 1.5,
+            fontWeight: 'bold',
+            borderColor: '#1976d2',
+            color: '#1976d2',
+            '&:hover': { backgroundColor: '#e3f2fd' },
+          }}
+        >
+          Continue with Google
+        </Button>
       </Paper>
 
       {/* Snackbar for Alerts */}
