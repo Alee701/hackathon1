@@ -50,7 +50,7 @@ const testimonials = [
     name: 'Ali Khan',
     message:
       'Saylani Microfinance helped me kickstart my business. Their team was supportive, and the process was seamless.',
-    image: 'https://via.placeholder.com/150',
+    image: 'https://livingwatersdownunder.com/wp-content/uploads/2018/08/profile-image-emeal-zwayne-1x1.jpg',
   },
   {
     name: 'Sara Ahmed',

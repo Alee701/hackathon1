@@ -11,10 +11,9 @@ import {
   IconButton,
   Snackbar,
   Alert,
-  Divider,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { loginUser, registerUser } from '../services/api'; // Backend API calls
+import { loginUser, registerUser } from '../services/api';
 import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,19 +28,24 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState(0); // 0 for Login, 1 for Register
-  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    cnic: '', // Added `cnic` for registration
+  });
   const [error, setError] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: '' });
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    setFormData({ email: '', password: '', name: '' }); // Reset form
+    setFormData({ email: '', password: '', name: '', cnic: '' }); // Reset form
     setError('');
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value || '' });
   };
 
   const handlePasswordVisibilityToggle = () => {
@@ -56,7 +60,11 @@ const AuthPage = () => {
     e.preventDefault();
 
     // Validation for missing fields
-    if (!formData.email || !formData.password || (activeTab === 1 && !formData.name)) {
+    if (
+      !formData.email ||
+      !formData.password ||
+      (activeTab === 1 && (!formData.name || !formData.cnic))
+    ) {
       setError('All fields are required.');
       setSnackbar({ open: true, message: 'Please fill in all fields.', severity: 'error' });
       return;
@@ -71,7 +79,12 @@ const AuthPage = () => {
         navigate('/dashboard'); // Redirect to user dashboard
       } else {
         // Register API Call
-        const response = await registerUser(formData);
+        const response = await registerUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          cnic: formData.cnic,
+        });
         dispatch({ type: 'SET_USER', payload: response.data.user });
         setSnackbar({ open: true, message: 'Registration successful!', severity: 'success' });
         navigate('/dashboard'); // Redirect to user dashboard
@@ -90,36 +103,13 @@ const AuthPage = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f0f4f7',
+        backgroundColor: '#e8f5e9',
         padding: 2,
       }}
     >
-      <Paper
-        elevation={8}
-        sx={{
-          padding: 4,
-          width: '100%',
-          maxWidth: 450,
-          borderRadius: 4,
-          boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.2)',
-          backgroundColor: '#fff',
-        }}
-      >
-        <Typography
-          variant="h4"
-          gutterBottom
-          sx={{
-            textAlign: 'center',
-            fontWeight: 'bold',
-            color: '#1976d2',
-          }}
-        >
-          {activeTab === 0 ? 'Welcome Back!' : 'Join Us Today!'}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ textAlign: 'center', mb: 3, color: '#555' }}>
-          {activeTab === 0
-            ? 'Log in to access your dashboard and manage your loans.'
-            : 'Sign up to start your financial journey with us.'}
+      <Paper elevation={5} sx={{ padding: 4, width: '100%', maxWidth: 400, borderRadius: 4 }}>
+        <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+          {activeTab === 0 ? 'Login' : 'Register'}
         </Typography>
 
         {/* Tabs for Login and Register */}
@@ -129,35 +119,39 @@ const AuthPage = () => {
           indicatorColor="primary"
           textColor="primary"
           centered
-          sx={{
-            marginBottom: 3,
-            '& .MuiTabs-indicator': { backgroundColor: '#1976d2' },
-          }}
+          sx={{ marginBottom: 3 }}
         >
-          <Tab label="Login" sx={{ fontWeight: 'bold' }} />
-          <Tab label="Register" sx={{ fontWeight: 'bold' }} />
+          <Tab label="Login" />
+          <Tab label="Register" />
         </Tabs>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         {/* Login/Register Form */}
         <form onSubmit={handleSubmit}>
           {activeTab === 1 && (
-            <TextField
-              fullWidth
-              label="Name"
-              name="name"
-              margin="normal"
-              variant="outlined"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              sx={{ backgroundColor: '#f9f9f9' }}
-            />
+            <>
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                margin="normal"
+                variant="outlined"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+              <TextField
+                fullWidth
+                label="CNIC"
+                name="cnic"
+                margin="normal"
+                variant="outlined"
+                value={formData.cnic}
+                onChange={handleChange}
+                required
+              />
+            </>
           )}
           <TextField
             fullWidth
@@ -168,7 +162,6 @@ const AuthPage = () => {
             value={formData.email}
             onChange={handleChange}
             required
-            sx={{ backgroundColor: '#f9f9f9' }}
           />
           <TextField
             fullWidth
@@ -180,7 +173,6 @@ const AuthPage = () => {
             value={formData.password}
             onChange={handleChange}
             required
-            sx={{ backgroundColor: '#f9f9f9' }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -194,32 +186,13 @@ const AuthPage = () => {
           <Button
             type="submit"
             variant="contained"
+            color="primary"
             fullWidth
-            sx={{
-              marginTop: 2,
-              py: 1.5,
-              backgroundColor: '#1976d2',
-              '&:hover': { backgroundColor: '#115293' },
-              fontWeight: 'bold',
-            }}
+            sx={{ marginTop: 2, py: 1 }}
           >
             {activeTab === 0 ? 'Login' : 'Register'}
           </Button>
         </form>
-        <Divider sx={{ my: 3 }}>OR</Divider>
-        <Button
-          variant="outlined"
-          fullWidth
-          sx={{
-            py: 1.5,
-            fontWeight: 'bold',
-            borderColor: '#1976d2',
-            color: '#1976d2',
-            '&:hover': { backgroundColor: '#e3f2fd' },
-          }}
-        >
-          Continue with Google
-        </Button>
       </Paper>
 
       {/* Snackbar for Alerts */}

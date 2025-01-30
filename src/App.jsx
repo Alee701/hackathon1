@@ -6,7 +6,7 @@ import AdminRoutes from './routes/AdminRoutes';
 import Footer from './components/Footer';
 
 const App = () => {
-  const role = 'user'; // Change to 'admin' for admin role (this can come from context or API)
+  const role = 'user';
 
   return (
     <Router>

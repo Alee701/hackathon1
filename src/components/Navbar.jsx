@@ -12,22 +12,30 @@ import {
   Divider,
   Box,
   Avatar,
+  Menu,
+  MenuItem,
   useTheme,
   useMediaQuery,
+  Modal,
 } from '@mui/material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import EditIcon from '@mui/icons-material/Edit';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 const Navbar = ({ role, userName }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Simulated login state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Simulate login state check
+  // Check Auth State
   useEffect(() => {
     const authToken = localStorage.getItem('authToken');
     setIsLoggedIn(!!authToken);
@@ -41,6 +49,23 @@ const Navbar = ({ role, userName }) => {
     localStorage.removeItem('authToken'); // Clear token
     setIsLoggedIn(false);
     navigate('/auth');
+  };
+
+  const openProfileMenu = (event) => {
+    setProfileMenuAnchor(event.currentTarget);
+  };
+
+  const closeProfileMenu = () => {
+    setProfileMenuAnchor(null);
+  };
+
+  const openProfileModal = () => {
+    setProfileModalOpen(true);
+    closeProfileMenu();
+  };
+
+  const closeProfileModal = () => {
+    setProfileModalOpen(false);
   };
 
   const userLinks = [
@@ -118,25 +143,25 @@ const Navbar = ({ role, userName }) => {
             ))}
             {isLoggedIn ? (
               <>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  sx={{ textTransform: 'capitalize' }}
-                  onClick={handleLogout}
+                <IconButton color="inherit" onClick={openProfileMenu}>
+                  <Avatar alt={userName || 'User'} sx={{ bgcolor: 'secondary.main' }}>
+                    {userName?.charAt(0).toUpperCase() || 'U'}
+                  </Avatar>
+                </IconButton>
+                <Menu
+                  anchorEl={profileMenuAnchor}
+                  open={Boolean(profileMenuAnchor)}
+                  onClose={closeProfileMenu}
                 >
-                  Logout
-                </Button>
-                <Avatar
-                  alt={userName || 'User'}
-                  sx={{
-                    backgroundColor: 'secondary.main',
-                    cursor: 'pointer',
-                    ml: 2,
-                  }}
-                  onClick={() => navigate('/profile')}
-                >
-                  {userName?.charAt(0).toUpperCase() || 'U'}
-                </Avatar>
+                  <MenuItem onClick={openProfileModal}>
+                    <EditIcon sx={{ mr: 1 }} />
+                    Edit Profile
+                  </MenuItem>
+                  <MenuItem onClick={handleLogout}>
+                    <ExitToAppIcon sx={{ mr: 1 }} />
+                    Logout
+                  </MenuItem>
+                </Menu>
               </>
             ) : (
               <Button
@@ -157,12 +182,7 @@ const Navbar = ({ role, userName }) => {
 
         {/* Mobile Menu Button */}
         {isMobile && (
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={() => toggleMobileMenu(true)}
-          >
+          <IconButton edge="start" color="inherit" onClick={() => toggleMobileMenu(true)}>
             <MenuIcon />
           </IconButton>
         )}
@@ -182,10 +202,7 @@ const Navbar = ({ role, userName }) => {
         }}
       >
         <Box sx={{ width: '100%', p: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{ textAlign: 'center', fontWeight: 'bold', mb: 2 }}
-          >
+          <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 'bold', mb: 2 }}>
             Navigation
           </Typography>
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.3)' }} />
@@ -212,29 +229,25 @@ const Navbar = ({ role, userName }) => {
             ))}
           </List>
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.3)' }} />
-          {isLoggedIn ? (
-            <Button
-              fullWidth
-              color="secondary"
-              variant="contained"
-              onClick={handleLogout}
-              sx={{ mt: 2 }}
-            >
+          {isLoggedIn && (
+            <Button fullWidth color="secondary" variant="contained" onClick={handleLogout} sx={{ mt: 2 }}>
               Logout
-            </Button>
-          ) : (
-            <Button
-              fullWidth
-              variant="outlined"
-              color="inherit"
-              onClick={() => navigate('/auth')}
-              sx={{ mt: 2, borderColor: '#ffffff', color: '#ffffff' }}
-            >
-              Login
             </Button>
           )}
         </Box>
       </Drawer>
+
+      {/* Profile Modal */}
+      <Modal open={profileModalOpen} onClose={closeProfileModal}>
+        <Box sx={{ backgroundColor: 'white', p: 4, borderRadius: 2, width: 400, margin: 'auto', mt: '10%' }}>
+          <Typography variant="h6" gutterBottom>
+            Edit Profile (Coming Soon)
+          </Typography>
+          <Button variant="contained" color="secondary" onClick={closeProfileModal}>
+            Close
+          </Button>
+        </Box>
+      </Modal>
     </AppBar>
   );
 };

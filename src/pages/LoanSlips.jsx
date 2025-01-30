@@ -25,44 +25,41 @@ import { getLoanSlips, downloadSlip } from '../services/api';
 import SlipDownload from '../components/SlipDownload';
 
 const LoanSlips = () => {
-  const [loanSlips, setLoanSlips] = useState([]);
+  const [loanSlips, setLoanSlips] = useState([]); // Ensuring it's an array
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ type: '', date: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: '' });
   const [selectedSlip, setSelectedSlip] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const slipDetails = {
-    token: '123456',
-    date: '2025-01-01',
-    location: 'Saylani Welfare Office',
-  };
 
   // Fetch Loan Slips
   useEffect(() => {
-    const fetchLoanSlips = async () => {
-      try {
-        const response = await getLoanSlips();
-        setLoanSlips(response.data);
-      } catch (err) {
-        console.error('Failed to fetch loan slips:', err);
-        setSnackbar({
-          open: true,
-          message: 'Failed to fetch loan slips. Please try again later.',
-          severity: 'error',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchLoanSlips();
   }, []);
+
+  const fetchLoanSlips = async () => {
+    setLoading(true);
+    try {
+      const response = await getLoanSlips();
+      setLoanSlips(response.data || []); // Ensure it defaults to an array
+    } catch (err) {
+      console.error('Failed to fetch loan slips:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch loan slips. Please try again later.',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle Filter Change
   const handleFilterChange = (e) => {
     setFilters({ ...filters, [e.target.name]: e.target.value });
   };
 
-  // Handle Download
+  // Handle Download Slip
   const handleDownload = async (loanId) => {
     try {
       const response = await downloadSlip(loanId);
@@ -73,11 +70,14 @@ const LoanSlips = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
       setSnackbar({
         open: true,
         message: 'Loan slip downloaded successfully!',
         severity: 'success',
       });
+
+      fetchLoanSlips(); // Refresh the list after download
     } catch (err) {
       console.error('Failed to download loan slip:', err);
       setSnackbar({
@@ -100,12 +100,14 @@ const LoanSlips = () => {
     setDialogOpen(false);
   };
 
-  // Filtered Slips
-  const filteredSlips = loanSlips.filter(
-    (slip) =>
-      (filters.type ? slip.type === filters.type : true) &&
-      (filters.date ? slip.date.includes(filters.date) : true)
-  );
+  // Filtered Slips with Safety Check
+  const filteredSlips = Array.isArray(loanSlips)
+    ? loanSlips.filter(
+        (slip) =>
+          (filters.type ? slip.type === filters.type : true) &&
+          (filters.date ? slip.date.includes(filters.date) : true)
+      )
+    : [];
 
   // Snackbar Close
   const handleSnackbarClose = () => {
@@ -114,12 +116,12 @@ const LoanSlips = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
         Loan Slips
       </Typography>
 
       {/* Filters */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
         <TextField
           select
           label="Filter by Loan Type"
@@ -149,17 +151,19 @@ const LoanSlips = () => {
 
       {/* Loan Slip Table */}
       {loading ? (
-        <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+          <CircularProgress />
+        </Box>
       ) : (
-        <Paper sx={{ p: 2 }}>
+        <Paper sx={{ p: 2, overflowX: 'auto' }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Loan ID</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Amount (PKR)</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Loan ID</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Amount (PKR)</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -207,7 +211,7 @@ const LoanSlips = () => {
       {/* Slip Preview Dialog */}
       {selectedSlip && (
         <Dialog open={dialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-          <DialogTitle>Slip Details</DialogTitle>
+          <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold' }}>Slip Details</DialogTitle>
           <DialogContent>
             <SlipDownload slipDetails={selectedSlip} />
           </DialogContent>
